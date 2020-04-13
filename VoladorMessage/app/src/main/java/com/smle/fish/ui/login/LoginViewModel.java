@@ -7,9 +7,9 @@ import androidx.lifecycle.ViewModel;
 import android.util.Patterns;
 
 import com.smle.fish.R;
-import com.smle.fish.ui.data.LoginRepository;
-import com.smle.fish.ui.data.Result;
-import com.smle.fish.ui.data.model.LoggedInUser;
+import com.smle.fish.data.LoginRepository;
+import com.smle.fish.data.Result;
+import com.smle.fish.data.model.LoggedInUser;
 
 public class LoginViewModel extends ViewModel {
 

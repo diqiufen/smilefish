@@ -1,4 +1,4 @@
-package com.smle.fish.ui.data.model;
+package com.smle.fish.data.model;
 
 /**
  * Data class that captures user information for logged in users retrieved from LoginRepository

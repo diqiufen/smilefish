@@ -1,6 +1,6 @@
-package com.smle.fish.ui.data;
+package com.smle.fish.data;
 
-import com.smle.fish.ui.data.model.LoggedInUser;
+import com.smle.fish.data.model.LoggedInUser;
 
 import java.io.IOException;
 

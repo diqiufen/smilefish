@@ -1,18 +1,10 @@
 package com.smle.fish.ui.login;
 
 import android.app.Activity;
-
-import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModelProviders;
-
 import android.os.Bundle;
-
-import androidx.annotation.Nullable;
-import androidx.annotation.StringRes;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Patterns;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -23,24 +15,31 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.smle.fish.R;
+import com.smle.fish.contrlo.FishIntent;
+import com.smle.fish.ui.BaseActivity;
 
+import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProviders;
 
-public class LoginActivity extends AppCompatActivity {
-
+public class LoginActivity extends BaseActivity {
     private LoginViewModel loginViewModel;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_login);
+    public int getContentViewId() {
+        return R.layout.activity_login;
+    }
+
+    @Override
+    public void init() {
         loginViewModel = ViewModelProviders.of(this, new LoginViewModelFactory())
                 .get(LoginViewModel.class);
-
+//        loginViewModel=new ViewModelProvider();
         final EditText usernameEditText = findViewById(R.id.username);
         final EditText passwordEditText = findViewById(R.id.password);
         final Button loginButton = findViewById(R.id.login);
         final ProgressBar loadingProgressBar = findViewById(R.id.loading);
-
         loginViewModel.getLoginFormState().observe(this, new Observer<LoginFormState>() {
             @Override
             public void onChanged(@Nullable LoginFormState loginFormState) {
@@ -68,6 +67,7 @@ public class LoginActivity extends AppCompatActivity {
                     showLoginFailed(loginResult.getError());
                 }
                 if (loginResult.getSuccess() != null) {
+                    FishIntent.startMainActivity(LoginActivity.this);
                     updateUiWithUser(loginResult.getSuccess());
                 }
                 setResult(Activity.RESULT_OK);
@@ -118,6 +118,11 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    public void getData() {
+
+    }
+
     private void updateUiWithUser(LoggedInUserView model) {
         String welcome = getString(R.string.welcome) + model.getDisplayName();
         // TODO : initiate successful logged in experience
@@ -127,4 +132,6 @@ public class LoginActivity extends AppCompatActivity {
     private void showLoginFailed(@StringRes Integer errorString) {
         Toast.makeText(getApplicationContext(), errorString, Toast.LENGTH_SHORT).show();
     }
+
+
 }

@@ -1,4 +1,4 @@
-package com.smle.fish.ui.data;
+package com.smle.fish.data;
 
 /**
  * A generic class that holds a result success w/ data or an error exception.

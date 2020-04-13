@@ -1,6 +1,6 @@
-package com.smle.fish.ui.data;
+package com.smle.fish.data;
 
-import com.smle.fish.ui.data.model.LoggedInUser;
+import com.smle.fish.data.model.LoggedInUser;
 
 /**
  * Class that requests authentication and user information from the remote data source and

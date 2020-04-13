@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.annotation.NonNull;
 
-import com.smle.fish.ui.data.LoginDataSource;
-import com.smle.fish.ui.data.LoginRepository;
+import com.smle.fish.data.LoginDataSource;
+import com.smle.fish.data.LoginRepository;
 
 /**
  * ViewModel provider factory to instantiate LoginViewModel.
