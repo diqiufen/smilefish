@@ -26,6 +26,10 @@ public class DbUtils {
     private final String DELETE_TABLE = "DROP TABLE";
     private final String ALTER_TABLE = "ALTER TABLE";//修改表名
     private String key = "id";//主键
+    //复制的临时表 用于 在表数据 大更改时更改原表名（为了存储历史数据）  再重新创建表
+    public static final String tempTable = "copyTable";
+    //当查询的列名不存在时  是否插入列
+    private boolean isInsertLine = true;
 
     public void initTable(Class c) {
 
@@ -51,15 +55,15 @@ public class DbUtils {
      * @param newClass
      * @return
      */
-    public String updateTableName(Class oldClass, Class newClass) {
+    public String updateTableName(String oldClass, String newClass) {
         StringBuffer stringBuffer = new StringBuffer();
         stringBuffer.append(ALTER_TABLE);
         stringBuffer.append(" ");
-        stringBuffer.append(oldClass.getSimpleName());
+        stringBuffer.append(oldClass);
         stringBuffer.append(" ");
         stringBuffer.append("RENAME TO");
         stringBuffer.append(" ");
-        stringBuffer.append(newClass.getSimpleName());
+        stringBuffer.append(newClass);
         Log.d(TAG, "sql=" + stringBuffer.toString());
         return stringBuffer.toString();
     }
@@ -454,7 +458,7 @@ public class DbUtils {
         }
     }
 
-    private Object getTypeValue(Cursor cursor, Object type, String fieldName) throws NullPointerException {
+    private Object getTypeValue(Cursor cursor, Object type, String fieldName) {
         Object value = null;
         try {
             if (type instanceof Integer) {
@@ -471,8 +475,59 @@ public class DbUtils {
                 value = cursor.getString(cursor.getColumnIndex(fieldName));
             }
         } catch (IllegalStateException e) {
-            new NullPointerException(fieldName);
+            e.printStackTrace();
+            value = null;
         }
         return value;
+    }
+
+
+    /**
+     * 导入表数据的sql
+     *
+     * @param newTableName 新表名
+     * @param columnNames  就表列
+     * @return
+     */
+    public String importTableDataSql(String newTableName, String[] columnNames) {
+        StringBuffer stringBuffer = new StringBuffer();
+        stringBuffer.append("INSERT INTO");
+        stringBuffer.append(" ");
+        stringBuffer.append(newTableName);
+        stringBuffer.append("(");
+        StringBuffer child = new StringBuffer();
+        for (String columu : columnNames) {
+            if (child.length() > 0) {
+                child.append(",");
+            }
+            child.append(columu);
+        }
+        stringBuffer.append(child.toString());
+        stringBuffer.append(")");
+        stringBuffer.append(" ");
+        stringBuffer.append("SELECT");
+        stringBuffer.append(" ");
+        stringBuffer.append(child.toString());
+        stringBuffer.append(" ");
+        stringBuffer.append("FROM");
+        stringBuffer.append(" ");
+        stringBuffer.append(tempTable);
+        return stringBuffer.toString();
+    }
+
+    /**
+     * 删除表
+     *
+     * @param simpleName
+     * @return
+     */
+    public String getDeleteTable(String simpleName) {
+        StringBuffer stringBuffer = new StringBuffer();
+        stringBuffer.append("DROP");
+        stringBuffer.append(" ");
+        stringBuffer.append("table");
+        stringBuffer.append(" ");
+        stringBuffer.append(simpleName);
+        return stringBuffer.toString();
     }
 }

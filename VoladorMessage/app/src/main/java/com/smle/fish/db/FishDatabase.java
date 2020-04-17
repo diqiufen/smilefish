@@ -1,13 +1,13 @@
 package com.smle.fish.db;
 
 import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
-import com.smle.fish.smilelibrary.db.DbBaseModel;
+import com.smle.fish.model.TestModelA;
 import com.smle.fish.model.db.FishUser;
 import com.smle.fish.model.db.LatelyContacts;
 import com.smle.fish.smilelibrary.db.DatabaseControl;
-import com.smle.fish.smilelibrary.db.DbUtils;
+import com.smle.fish.smilelibrary.db.DbBaseModel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,14 +24,14 @@ import androidx.lifecycle.Observer;
 public class FishDatabase {
 
     private final String databaseName = "FishDatabase";
-    private int version = 3;
+    private int version = 11;
     private Context context;
     private static FishDatabase fishDatabase = null;
     public DatabaseControl databaseControl;
 
     private FishDatabase(Context context) {
         this.context = context;
-        databaseControl = new DatabaseControl(context);
+        databaseControl = new DatabaseControl(context, databaseName, version);
     }
 
     public static synchronized FishDatabase getInstance(Context context) {
@@ -52,8 +52,14 @@ public class FishDatabase {
         List<Class> classListTwo = new ArrayList<>();
         classList.add(FishUser.class);
         classList.add(LatelyContacts.class);
-        databaseControl.setUpgradeTableList(classListTwo);
-        databaseControl.initDatabase(databaseName, version, classList);
+//        databaseControl.setUpgradeTableList(classListTwo);
+        databaseControl.initDatabase(classList);
+        databaseControl.addTable(new TestModelA(), new Observer() {
+            @Override
+            public void onChanged(Object o) {
+                Log.d("onChanged", "o=" + o);
+            }
+        });
     }
 
     public <T extends DbBaseModel> void insertData(List<T> fishUserList, Observer<Long> observer) {

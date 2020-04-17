@@ -42,14 +42,14 @@ public class DatabaseControl implements SQLiteDatabase.CursorFactory, Database.C
     private Context context;
     private int version = 1;
     private List<Class> tableList = new ArrayList<>();
-    private List<Class> upgradeTableList = new ArrayList<>();
-    private List<Class> deleteTableList = new ArrayList<>();
     public final static long SUCCEED = 0;
     public final static long FAILED = -1;
+    private long timeMax = 10000;//更新数据库指令的等待最大时长
     private DbHandler dbHandler;
 
-    public DatabaseControl(Context context) {
+    public DatabaseControl(Context context, String databaseName, int version) {
         this.context = context;
+        database = new Database(context, databaseName, null, version, this);
         dbUtils = new DbUtils();
         dbHandler = new DbHandler();
     }
@@ -65,9 +65,8 @@ public class DatabaseControl implements SQLiteDatabase.CursorFactory, Database.C
 //        return databaseControl;
 //    }
 
-    public void initDatabase(String databaseName, int version, List<Class> tableList) {
+    public void initDatabase(List<Class> tableList) {
         this.tableList = tableList;
-        database = new Database(context, databaseName, null, version, this);
         databaseRead = database.getReadableDatabase();
         databaseWrite = database.getWritableDatabase();
     }
@@ -105,7 +104,7 @@ public class DatabaseControl implements SQLiteDatabase.CursorFactory, Database.C
     @Override
     public void onUpgradeDatabaseListener(SQLiteDatabase db, int oldVersion, int newVersion) {
         this.databaseCreateTable = db;
-        upgradeTable();
+//        upgradeTable();
     }
 
     /**
@@ -120,86 +119,196 @@ public class DatabaseControl implements SQLiteDatabase.CursorFactory, Database.C
         }
     }
 
-    public void setDeleteTableList(List<Class> deleteTableList) {
-        this.deleteTableList = deleteTableList;
+//    public void setDeleteTableList(List<Class> deleteTableList) {
+//        this.deleteTableList = deleteTableList;
+//    }
+//
+//    public <T extends DbBaseModel> void deleteTable(List<Class> deleteTableList) {
+//
+//        if (databaseCreateTable != null) {
+//            for (Class c : deleteTableList) {
+//                databaseCreateTable.execSQL(dbUtils.deleteTable(c));
+//            }
+//            deleteTableList.clear();
+//        }
+//    }
+
+//    public void upgradeVersion(int version) {
+//        if (databaseCreateTable == null) {
+//            database = new Database(context, databaseName, null, version, this);
+//            databaseRead = database.getReadableDatabase();
+//            databaseWrite = database.getWritableDatabase();
+//        }
+//    }
+
+//    public void upgradeTable() {
+//        if (databaseCreateTable != null) {
+//            for (Class c : upgradeTableList) {
+//                Log.d(TAG, "createTab " + c.getSimpleName() + "成功");
+//                databaseCreateTable.execSQL(dbUtils.createTable(c));
+//            }
+//        }
+//    }
+
+    /**
+     * 需要升级版本修改{@link DatabaseControl version} 否则无效
+     * 新增表
+     *
+     * @param module
+     * @param observer
+     * @param <T>
+     */
+    public <T extends DbBaseModel> void addTable(T module, Observer observer) {
+        ExecutorManage.singleTaskExecutor.submit(getAlterTable(Order.addTable, module, null, observer));
     }
 
-    public synchronized <T extends DbBaseModel> void deleteTable() {
-        if (databaseCreateTable != null) {
-            for (Class c : deleteTableList) {
-                databaseCreateTable.execSQL(dbUtils.deleteTable(c));
-            }
-            deleteTableList.clear();
-        }
+    /**
+     * 需要升级版本修改{@link DatabaseControl version} 否则无效
+     * 新增表
+     *
+     * @param moduleList
+     * @param observer
+     * @param <T>
+     */
+    public <T extends DbBaseModel> void addTableList(List<T> moduleList, Observer observer) {
+        ExecutorManage.singleTaskExecutor.submit(getAlterTable(Order.addTableList, null, moduleList, observer));
+
     }
 
-    public void upgradeVersion(int version) {
-        if (databaseCreateTable == null) {
-            database = new Database(context, databaseName, null, version, this);
-            databaseRead = database.getReadableDatabase();
-            databaseWrite = database.getWritableDatabase();
-        }
+    /**
+     * 需要升级版本修改{@link DatabaseControl version} 否则无效
+     * 删除表
+     *
+     * @param module
+     * @param observer
+     * @param <T>
+     */
+    public <T extends DbBaseModel> void deleteTable(T module, Observer observer) {
+        ExecutorManage.singleTaskExecutor.submit(getAlterTable(Order.deleteTable, module, null, observer));
     }
 
-    public void upgradeTable() {
-        if (databaseCreateTable != null) {
-            for (Class c : upgradeTableList) {
-                Log.d(TAG, "createTab " + c.getSimpleName() + "成功");
-                databaseCreateTable.execSQL(dbUtils.createTable(c));
-            }
-        }
+    /**
+     * 需要升级版本修改{@link DatabaseControl version} 否则无效
+     * 删除表
+     *
+     * @param moduleList
+     * @param observer
+     * @param <T>
+     */
+    public <T extends DbBaseModel> void deleteTableList(List<T> moduleList, Observer observer) {
+        ExecutorManage.singleTaskExecutor.submit(getAlterTable(Order.deleteTableList, null, moduleList, observer));
     }
 
-    public void setUpgradeTableList(List<Class> upgradeTableList) {
-        this.upgradeTableList = upgradeTableList;
+    /**
+     * 需要升级版本修改{@link DatabaseControl version} 否则无效
+     * 在不更改原表数据的情况下修改表（目前只支持 新增对象属性 从而在表中新增字段）
+     *
+     * @param module
+     * @param observer
+     * @param <T>
+     */
+    public <T extends DbBaseModel> void alterTable(T module, Observer observer) {
+        ExecutorManage.singleTaskExecutor.submit(getAlterTable(Order.alterTable, module, null, observer));
     }
 
-    public int getVersion() {
-        return version;
-    }
 
-    public void setVersion(int version) {
-        this.version = version;
-    }
+//    public void setUpgradeTableList(List<Class> upgradeTableList) {
+//        this.upgradeTableList = upgradeTableList;
+//    }
+//
+//    public int getVersion() {
+//        return version;
+//    }
+//
+//    public void setVersion(int version) {
+//        this.version = version;
+//    }
 
-    private void addTableColumn() {
-        if (databaseCreateTable == null) {
-            databaseCreateTable = database.getWritableDatabase();
-        }
-    }
-
+    /**
+     * 向 T 表中插入多条数据
+     *
+     * @param moduleList
+     * @param observer
+     * @param <T>
+     */
     public <T extends DbBaseModel> void insert(List<T> moduleList, Observer<Long> observer) {
         ExecutorManage.singleTaskExecutor.submit(getTableModel(Order.insert, null, moduleList, observer));
     }
 
+    /**
+     * 向 T 表中插入单条数据
+     *
+     * @param module
+     * @param observer
+     * @param <T>
+     */
     public <T extends DbBaseModel> void insert(T module, Observer<Long> observer) {
         ExecutorManage.singleTaskExecutor.submit(getTableModel(Order.insert, module, null, observer));
     }
 
+    /**
+     * 删除 T 表中的某条数据
+     *
+     * @param module   删除的数据对象 （根据 DbBaseModel 的id 删除 所以要删除的数据必须包含数据对象的id）
+     * @param observer
+     * @param <T>
+     */
     public <T extends DbBaseModel> void delete(T module, Observer<Long> observer) {
         ExecutorManage.singleTaskExecutor.submit(getTableModel(Order.delete, module, null, observer));
     }
 
+    /**
+     * 删除 T 表中的多条数据
+     *
+     * @param moduleList 删除的数据对象 （根据 DbBaseModel 的id 删除 所以要删除的数据必须包含数据对象的id）
+     * @param observer   返回状态值
+     * @param <T>
+     */
     public <T extends DbBaseModel> void delete(List<T> moduleList, Observer<Long> observer) {
         ExecutorManage.singleTaskExecutor.submit(getTableModel(Order.delete, null, moduleList, observer));
     }
 
+    /**
+     * 更新数据
+     *
+     * @param module   更新的对象 （根据 DbBaseModel 的id 更新 所以传入的对象必须存在id）
+     * @param observer 返回状态值
+     * @param <T>
+     */
     public <T extends DbBaseModel> void update(T module, Observer<Long> observer) {
         ExecutorManage.singleTaskExecutor.submit(getTableModel(Order.update, module, null, observer));
     }
 
+    /**
+     * 同时更新多条数据
+     *
+     * @param moduleList 更新的对象 （根据 DbBaseModel 的id 更新 所以传入的对象必须存在id）
+     * @param observer
+     * @param <T>
+     */
     public <T extends DbBaseModel> void update(List<T> moduleList, Observer<Long> observer) {
         ExecutorManage.singleTaskExecutor.submit(getTableModel(Order.update, null, moduleList, observer));
     }
 
+    /**
+     * 根据对象 查询相对于的数据表
+     *
+     * @param module
+     * @param observer
+     * @param <T>
+     * @param <M>
+     */
     public <T extends DbBaseModel, M> void query(T module, Observer<M> observer) {
         ExecutorManage.singleTaskExecutor.submit(getTableModel(Order.query, module, null, observer));
     }
 
-
     private synchronized <T extends DbBaseModel, M> TableModel getTableModel(Order order, T module, List<T> moduleList, Observer<M> observer) {
         // TODO: 2020/4/15
         return new TableModel(order, module, moduleList, observer);
+    }
+
+    private synchronized <T extends DbBaseModel, M> AlterTable getAlterTable(Order order, T module, List<T> moduleList, Observer<M> observer) {
+        return new AlterTable(order, module, moduleList, observer);
     }
 
 
@@ -282,15 +391,17 @@ public class DatabaseControl implements SQLiteDatabase.CursorFactory, Database.C
                     try {
                         query(module, observer);
                     } catch (NullPointerException exception) {
-                        //表示数据库中没有这列 这里新增列
-                        if (!exception.getMessage().equals("")) {
-                            dbUtils.addTableColumn(module.getClass(), exception.getMessage());
-                            try {
-                                query(module, observer);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        }
+                        exception.printStackTrace();
+//                        //表示数据库中没有这列 这里新增列
+//                        if (!exception.getMessage().equals("")) {
+//                            addTableColumn(dbUtils.addTableColumn(module.getClass(), exception.getMessage()));
+//                            try {
+//                                databaseRead = database.getReadableDatabase();
+//                                query(module, observer);
+//                            } catch (Exception e) {
+//                                e.printStackTrace();
+//                            }
+//                        }
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -445,7 +556,7 @@ public class DatabaseControl implements SQLiteDatabase.CursorFactory, Database.C
                 String orderBy = null;
                 String sql = dbUtils.getQueryTableSql(tableName);
                 //asc 升序 desc降序
-                Cursor cursor = databaseWrite.rawQuery(sql, null);
+                Cursor cursor = databaseRead.rawQuery(sql, null);
 //                Cursor cursor = databaseRead.query(tableName, columns, selection, selectionArgs, groupBy, having, orderBy);
                 getCursorData(module, cursor, observer);
             }
@@ -470,7 +581,7 @@ public class DatabaseControl implements SQLiteDatabase.CursorFactory, Database.C
                 String orderBy = null;
                 String sql = dbUtils.getQueryTableSql(tableName);
                 //asc 升序 desc降序
-                Cursor cursor = databaseWrite.rawQuery(sql, null);
+                Cursor cursor = databaseRead.rawQuery(sql, null);
 //                Cursor cursor = databaseRead.query(tableName, columns, selection, selectionArgs, groupBy, having, orderBy);
                 getCursorData(module.getClass(), cursor, observer);
             }
@@ -511,13 +622,134 @@ public class DatabaseControl implements SQLiteDatabase.CursorFactory, Database.C
     }
 
     /**
-     * 访问类型
+     * 更新表 需要升级数据库版本
+     *
+     * @param <T>
      */
-    private enum Order {
-        insert,
-        delete,
-        update,
-        query
+    class AlterTable<T> implements Runnable {
+
+        private Order order;//访问类型
+        private T module;
+        private List<T> moduleList;
+        private Observer<Long> observer;
+        //等待更新数据库 最晚10秒 十秒过后将停止任务等待
+        private long timeMax = DatabaseControl.this.timeMax;
+        private long runTime = 0;
+
+        public AlterTable(Order order, T module, List<T> moduleList, Observer<Long> observer) {
+            this.order = order;
+            this.module = module;
+            this.moduleList = moduleList;
+            this.observer = observer;
+        }
+
+        @Override
+        public void run() {
+            while (true) {
+                if (databaseCreateTable != null) {
+                    switch (order) {
+                        case addTable:
+                            addTable(module);
+                            break;
+                        case alterTable:
+                            alterTable(module);
+                            break;
+                        case deleteTable:
+                            deleteTable(module);
+                            break;
+                        case addTableList:
+                            addTableList(moduleList);
+                            break;
+                        case deleteTableList:
+                            deleteTableList(moduleList);
+                            break;
+                    }
+                    if (observer != null) {
+                        observer.onChanged(SUCCEED);
+                    }
+                    break;
+                } else {
+                    if (timeMax <= runTime) {
+                        if (observer != null) {
+                            observer.onChanged(FAILED);
+                        }
+                        break;
+                    }
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    runTime += 1000;
+                }
+            }
+        }
+
+        /**
+         * 为包添加列 一次只能添加一列
+         */
+        public void addTable(T t) {
+            if (databaseCreateTable != null) {
+                Log.d(TAG,"addTable--sql="+dbUtils.createTable(t.getClass()));
+                databaseCreateTable.execSQL(dbUtils.createTable(t.getClass()));
+            }
+        }
+
+        public void addTableList(List<T> moduleList) {
+            for (T t : moduleList) {
+                addTable(t);
+            }
+        }
+
+        /**
+         * 删除表
+         *
+         * @param t
+         */
+        public void deleteTable(T t) {
+            if (databaseCreateTable != null) {
+                databaseCreateTable.execSQL(dbUtils.deleteTable(t.getClass()));
+            }
+        }
+
+        /**
+         * 删除多张表
+         *
+         * @param moduleList
+         */
+        public void deleteTableList(List<T> moduleList) {
+            for (T t : moduleList) {
+                deleteTable(t);
+            }
+        }
+
+        /**
+         * 表新增了列 后需要使用此方法
+         *
+         * @param t
+         */
+        public void alterTable(T t) {
+            if (databaseCreateTable != null && databaseRead != null) {
+                Class c = t.getClass();
+                databaseCreateTable.execSQL(dbUtils.updateTableName(c.getSimpleName(), DbUtils.tempTable));
+                databaseCreateTable.execSQL(dbUtils.createTable(c));
+                String sql = dbUtils.getQueryTableSql(c.getSimpleName());
+                Cursor cursor = databaseRead.rawQuery(sql, null);
+                if (cursor != null) {
+                    throw new NullPointerException("null cursor");
+                }
+                databaseWrite.execSQL(dbUtils.importTableDataSql(c.getSimpleName(), cursor.getColumnNames()));
+                databaseCreateTable.execSQL(dbUtils.deleteTable(c));
+            }
+        }
+
     }
 
+    public long getTimeMax() {
+        return timeMax;
+    }
+
+    public void setTimeMax(long timeMax) {
+        this.timeMax = timeMax;
+    }
 }

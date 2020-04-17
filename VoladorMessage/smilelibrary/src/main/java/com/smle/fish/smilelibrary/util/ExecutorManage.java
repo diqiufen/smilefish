@@ -11,11 +11,11 @@ import java.util.concurrent.ThreadFactory;
 
 
 /**
-* 创建时间: 2020/4/9
-* 创建者: yj
-* 版本:
-* 功能描述
-*/
+ * 创建时间: 2020/4/9
+ * 创建者: yj
+ * 版本:
+ * 功能描述
+ */
 public class ExecutorManage {
     /**
      * 总共多少任务（根据CPU个数决定创建活动线程的个数,这样取的好处就是可以让手机承受得住）
@@ -77,14 +77,6 @@ public class ExecutorManage {
         scheduledTaskFactoryExecutor = Executors.newFixedThreadPool(count);// 按指定工厂模式来执行的线程池
     }
 
-    public static class OnlyRunnable implements Runnable {
-        private static OnlyRunnable instance;
-
-        @Override
-        public void run() {
-
-        }
-    }
 
     /**
      * 添加任务
@@ -120,5 +112,6 @@ public class ExecutorManage {
     public interface IAllTaskListener {
         void allTaskComplete();
     }
+
 
 }

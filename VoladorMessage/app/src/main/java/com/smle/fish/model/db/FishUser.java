@@ -21,6 +21,15 @@ public class FishUser extends DbBaseModel {
     private String selfdomSignature = "";
     private String address = "";
     private String phone = "";
+    private String ccc="";
+
+    public String getCcc() {
+        return ccc;
+    }
+
+    public void setCcc(String ccc) {
+        this.ccc = ccc;
+    }
 
     public String getNickName() {
         return nickName;
