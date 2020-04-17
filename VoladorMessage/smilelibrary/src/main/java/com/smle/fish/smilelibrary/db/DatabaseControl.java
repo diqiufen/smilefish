@@ -10,6 +10,7 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 import com.smle.fish.data.Result;
+import com.smle.fish.model.db.DbBaseModel;
 import com.smle.fish.model.db.FishUser;
 
 import java.util.ArrayList;
@@ -62,7 +63,7 @@ public class DatabaseControl implements SQLiteDatabase.CursorFactory, Database.C
 
     public void initDatabase(String databaseName, int version, List<Class> tableList) {
         this.tableList = tableList;
-        database = new Database(context, databaseName, this, version, this);
+        database = new Database(context, databaseName, null, version, this);
         databaseRead = database.getReadableDatabase();
         databaseWrite = database.getWritableDatabase();
     }
@@ -76,7 +77,7 @@ public class DatabaseControl implements SQLiteDatabase.CursorFactory, Database.C
     }
 
     /**
-     * 查询 返回的数据
+     * 查询 根据需求整理返回的数据结构
      *
      * @param db
      * @param masterQuery
@@ -86,6 +87,7 @@ public class DatabaseControl implements SQLiteDatabase.CursorFactory, Database.C
      */
     @Override
     public Cursor newCursor(SQLiteDatabase db, SQLiteCursorDriver masterQuery, String editTable, SQLiteQuery query) {
+        Log.d(TAG, "newCursor  " + query.toString());
         return null;
     }
 
@@ -102,9 +104,9 @@ public class DatabaseControl implements SQLiteDatabase.CursorFactory, Database.C
     public void createTab() {
         if (databaseCreateTable != null) {
             for (Class c : tableList) {
+                Log.d(TAG, "createTab " + c.getSimpleName() + "成功");
                 dbUtils.createTable(databaseCreateTable, c);
             }
-            Log.d(TAG, "createTab 成功");
         }
     }
 
@@ -116,12 +118,12 @@ public class DatabaseControl implements SQLiteDatabase.CursorFactory, Database.C
         this.version = version;
     }
 
-    public TableModel getTableModel() {
+    public synchronized TableModel getTableModel() {
         return new TableModel();
     }
 
 
-    public class TableModel<T> implements Runnable {
+    public class TableModel implements Runnable {
         public final String whereClause = "whereClause";
         public final String whereArgs = "whereArgs";
 
@@ -129,14 +131,14 @@ public class DatabaseControl implements SQLiteDatabase.CursorFactory, Database.C
 
         }
 
-        private long insertData(T module) {
+        public <T extends DbBaseModel>long insertData(T module) {
             String tableName = getTableName(module);
             ContentValues contentValues = dbUtils.getFieldContentValues(module);
             long res = databaseWrite.insert(tableName, null, contentValues);
             return res;
         }
 
-        public void insert(List<T> fishUserList, Observer<Integer> observer) {
+        public <T extends DbBaseModel> void insert(List<T> fishUserList, Observer<Integer> observer) {
             if (databaseWrite != null) {
                 for (T module : fishUserList) {
                     long res = insertData(module);
@@ -154,14 +156,14 @@ public class DatabaseControl implements SQLiteDatabase.CursorFactory, Database.C
             }
         }
 
-        public void insert(T module, Observer observer) {
+        public  <T extends DbBaseModel> void insert(T module, Observer observer) {
             long res = insertData(module);
             if (observer != null) {
                 observer.onChanged(res);
             }
         }
 
-        public void delete(T module, @NonNull Observer observer) {
+        public  <T extends DbBaseModel> void delete(T module, @NonNull Observer observer) {
             if (databaseWrite != null) {
                 String tableName = dbUtils.getTableName(module.getClass());
                 Map<String, Object> whereValue = dbUtils.getDeleteCondition(module, whereClause, whereArgs);
@@ -177,7 +179,7 @@ public class DatabaseControl implements SQLiteDatabase.CursorFactory, Database.C
             }
         }
 
-        public void deleteList(List<T> moduleList, @NonNull Observer observer) {
+        public <T extends DbBaseModel> void deleteList(List<T> moduleList, @NonNull Observer observer) {
             if (databaseWrite != null) {
                 for (T module : moduleList) {
                     String tableName = dbUtils.getTableName(module.getClass());
@@ -201,15 +203,23 @@ public class DatabaseControl implements SQLiteDatabase.CursorFactory, Database.C
          * 更新某条数据的值
          *
          * @param module
-         * @param accordingField 条件字段
          * @param observer
          */
-        public void update(T module, String[] accordingField, @NonNull Observer observer) {
+        public <T extends DbBaseModel> void update(T module, @NonNull Observer observer) {
             if (databaseWrite != null) {
-                ContentValues contentValues = new ContentValues();
 //                Map<String, Object> whereValue = dbUtils.getDeleteCondition(module, whereClause, whereArgs);
-                Map<String, Object> whereValue = dbUtils.getAccordingValue(module, accordingField, whereClause, whereArgs);
-                databaseWrite.update(getTableName(module), contentValues, whereValue.get(whereClause).toString(), (String[]) whereValue.get(whereArgs));
+//                Map<String, Object> whereValue = dbUtils.getAccordingValue(module, whereClause, whereArgs);
+                DbBaseModel dbBaseModel = module;
+                String whereClauseString = "id=?";
+                String whereArgsString = dbBaseModel.getId() + "";
+                int res = databaseWrite.update(getTableName(module), getContentValues(module), whereClauseString, new String[]{whereArgsString});
+                if (res == FAILED) {
+                    observer.onChanged(FAILED);
+                } else {
+                    observer.onChanged(SUCCEED);
+                }
+            } else {
+                observer.onChanged(FAILED);
             }
         }
 
@@ -220,9 +230,9 @@ public class DatabaseControl implements SQLiteDatabase.CursorFactory, Database.C
          * @param module
          * @param observer
          */
-        public void query(T module, @NonNull Observer observer) {
-            if (databaseRead != null) {
-                String tableName = getTableName(module);
+        public void query(Class module, @NonNull Observer observer) throws Exception {
+            if (databaseWrite != null) {
+                String tableName = module.getSimpleName();
                 String[] columns = null;
                 //条件
                 String selection = null;
@@ -231,8 +241,52 @@ public class DatabaseControl implements SQLiteDatabase.CursorFactory, Database.C
                 String groupBy = null;
                 String having = null;
                 String orderBy = null;
-                databaseRead.query(tableName, columns, selection, selectionArgs, groupBy, having, orderBy);
-                databaseRead.close();
+                String sql = dbUtils.getQueryTableSql(tableName);
+                //asc 升序 desc降序
+                Cursor cursor = databaseWrite.rawQuery(sql, null);
+//                Cursor cursor = databaseRead.query(tableName, columns, selection, selectionArgs, groupBy, having, orderBy);
+                getCursorData(module, cursor, observer);
+            }
+        }
+
+        /**
+         * 根据模型查询表
+         *
+         * @param module
+         * @param observer
+         */
+        public <T extends DbBaseModel> void query(T module, @NonNull Observer observer) throws Exception {
+            if (databaseWrite != null) {
+                String tableName = module.getClass().getSimpleName();
+                String[] columns = null;
+                //条件
+                String selection = null;
+                //条件值 没有传null
+                String[] selectionArgs = null;
+                String groupBy = null;
+                String having = null;
+                String orderBy = null;
+                String sql = dbUtils.getQueryTableSql(tableName);
+                //asc 升序 desc降序
+                Cursor cursor = databaseWrite.rawQuery(sql, null);
+//                Cursor cursor = databaseRead.query(tableName, columns, selection, selectionArgs, groupBy, having, orderBy);
+                getCursorData(module.getClass(), cursor, observer);
+            }
+        }
+
+        private <M extends DbBaseModel> void getCursorData(Class module, Cursor cursor, Observer observer) throws Exception {
+            List<M> listValue = new ArrayList<>();
+            if (cursor == null) {
+                throw new Exception("查询错误");
+            }
+//            cursor.moveToFirst();
+            Log.d(TAG, "getCount=" + cursor.getCount());
+            while (cursor.moveToNext()) {
+                listValue.add((M) dbUtils.getModule(module, cursor));
+            }
+            cursor.close();
+            if (observer != null) {
+                observer.onChanged(listValue);
             }
         }
 
@@ -247,7 +301,7 @@ public class DatabaseControl implements SQLiteDatabase.CursorFactory, Database.C
             }
         }
 
-        public String getTableName(T module) {
+        public <T extends DbBaseModel> String getTableName(T module) {
             String tableName = dbUtils.getTableName(module.getClass());
             return tableName;
         }
@@ -256,8 +310,19 @@ public class DatabaseControl implements SQLiteDatabase.CursorFactory, Database.C
         public void run() {
 
         }
+
     }
 
+    /**
+     * 根据对象 获取 ContentValues 数据
+     *
+     * @param module
+     * @return
+     */
+    private ContentValues getContentValues(Object module) {
+        ContentValues contentValues = dbUtils.getFieldContentValues(module);
+        return contentValues;
+    }
 
     class Abc extends AsyncTask {
 
