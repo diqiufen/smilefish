@@ -9,6 +9,7 @@ import android.widget.TextView;
 
 import com.smle.fish.R;
 import com.smle.fish.interfaces.OnListFragmentInteractionListener;
+import com.smle.fish.model.db.FishUser;
 import com.smle.fish.ui.home.home.dummy.DummyContent.DummyItem;
 
 import java.util.List;
@@ -20,11 +21,11 @@ import java.util.List;
  */
 public class ConversationRecyclerViewAdapter extends RecyclerView.Adapter<ConversationRecyclerViewAdapter.ViewHolder> {
 
-    private final List<DummyItem> mValues;
+    private final List<FishUser> mValues;
     private final OnListFragmentInteractionListener mListener;
     private int index=0;
 
-    public ConversationRecyclerViewAdapter(List<DummyItem> items, OnListFragmentInteractionListener listener) {
+    public ConversationRecyclerViewAdapter(List<FishUser> items, OnListFragmentInteractionListener listener) {
         mValues = items;
         mListener = listener;
     }
@@ -39,8 +40,8 @@ public class ConversationRecyclerViewAdapter extends RecyclerView.Adapter<Conver
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
         holder.mItem = mValues.get(position);
-        holder.mIdView.setText(mValues.get(position).id);
-        holder.mContentView.setText(mValues.get(position).content);
+        holder.mIdView.setText(mValues.get(position).getId()+"");
+        holder.mContentView.setText(mValues.get(position).getNickName());
 
         holder.mView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -63,7 +64,7 @@ public class ConversationRecyclerViewAdapter extends RecyclerView.Adapter<Conver
         public final View mView;
         public final TextView mIdView;
         public final TextView mContentView;
-        public DummyItem mItem;
+        public FishUser mItem;
 
         public ViewHolder(View view) {
             super(view);

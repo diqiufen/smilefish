@@ -2,12 +2,21 @@ package com.smle.fish.ui.home.home;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.smle.fish.R;
+import com.smle.fish.db.FishDatabase;
+import com.smle.fish.interfaces.InjectView;
 import com.smle.fish.interfaces.OnListFragmentInteractionListener;
+import com.smle.fish.model.db.FishUser;
 import com.smle.fish.ui.BaseFragment;
+import com.smle.fish.ui.home.MainActivity;
 import com.smle.fish.ui.home.home.dummy.DummyContent;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -24,7 +33,9 @@ public class ConversationFragment extends BaseFragment {
     private static final String ARG_COLUMN_COUNT = "column-count";
     // TODO: Customize parameters
     private int mColumnCount = 1;
-
+    @InjectView(viewId = R.id.list)
+    private RecyclerView recyclerView;
+    private ConversationRecyclerViewAdapter conversationRecyclerViewAdapter;
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
@@ -52,21 +63,44 @@ public class ConversationFragment extends BaseFragment {
         if (getArguments() != null) {
             mColumnCount = getArguments().getInt(ARG_COLUMN_COUNT);
         }
-        // Set the adapter
-        if (rootView instanceof RecyclerView) {
-            Context context = rootView.getContext();
-            RecyclerView recyclerView = (RecyclerView) rootView;
-            if (mColumnCount <= 1) {
-                recyclerView.setLayoutManager(new LinearLayoutManager(context));
-            } else {
-                recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
-            }
-            recyclerView.setAdapter(new ConversationRecyclerViewAdapter(DummyContent.ITEMS, mListener));
+        setAdapter();
+    }
+
+    private void setAdapter(){
+        if (mColumnCount <= 1) {
+            recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        } else {
+            recyclerView.setLayoutManager(new GridLayoutManager(getActivity(), mColumnCount));
         }
+        conversationRecyclerViewAdapter =new ConversationRecyclerViewAdapter(fishUserList,mListener);
+        recyclerView.setAdapter(conversationRecyclerViewAdapter);
     }
 
     @Override
     public void getData() {
+        quer();
+    }
+
+    List<FishUser> fishUserList = new ArrayList<>();
+
+    public void quer() {
+        try {
+            FishDatabase.getInstance(getActivity()).query(new FishUser(), new Observer<List<FishUser>>() {
+                @Override
+                public void onChanged(List<FishUser> fishUserList) {
+                    ConversationFragment.this.fishUserList.clear();
+                    ConversationFragment.this.fishUserList.addAll(fishUserList);
+                    conversationRecyclerViewAdapter.notifyDataSetChanged();
+                    int i = 0;
+                    for (FishUser fishUser : fishUserList) {
+                        i++;
+                        Log.d(TAG, i + "=" + fishUser.toString());
+                    }
+                }
+            });
+        } catch (Exception e) {
+            Log.d(TAG, "" + e.getMessage());
+        }
 
     }
 

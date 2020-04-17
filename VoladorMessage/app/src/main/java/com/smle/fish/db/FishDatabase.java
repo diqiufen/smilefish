@@ -2,16 +2,16 @@ package com.smle.fish.db;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
 
-import com.smle.fish.contrlo.FishIntent;
+import com.smle.fish.smilelibrary.db.DbBaseModel;
 import com.smle.fish.model.db.FishUser;
 import com.smle.fish.model.db.LatelyContacts;
+import com.smle.fish.smilelibrary.db.DatabaseControl;
+import com.smle.fish.smilelibrary.db.DbUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import androidx.annotation.Nullable;
 import androidx.lifecycle.Observer;
 
 /**
@@ -23,40 +23,62 @@ import androidx.lifecycle.Observer;
  */
 public class FishDatabase {
 
-    private final String databaseName = "smileFish";
-    private int version = 1;
+    private final String databaseName = "FishDatabase";
+    private int version = 3;
     private Context context;
+    private static FishDatabase fishDatabase = null;
+    public DatabaseControl databaseControl;
 
-
-    public FishDatabase(Context context) {
+    private FishDatabase(Context context) {
         this.context = context;
+        databaseControl = new DatabaseControl(context);
+    }
+
+    public static synchronized FishDatabase getInstance(Context context) {
+        if (fishDatabase == null) {
+            synchronized (DatabaseControl.class) {
+                if (fishDatabase == null) {
+                    fishDatabase = new FishDatabase(context);
+                }
+            }
+        }
+        return fishDatabase;
     }
 
     public void init() {
         List<Class> classList = new ArrayList<>();
         classList.add(FishUser.class);
         classList.add(LatelyContacts.class);
-        DatabaseControl.getInstance(context).initDatabase(databaseName, version, classList);
+        List<Class> classListTwo = new ArrayList<>();
+        classList.add(FishUser.class);
+        classList.add(LatelyContacts.class);
+        databaseControl.setUpgradeTableList(classListTwo);
+        databaseControl.initDatabase(databaseName, version, classList);
     }
 
-    public void insertData(List<FishUser> fishUserList, Observer<Integer> observer) {
-        DatabaseControl.getInstance(context).getTableModel().insert(fishUserList, observer);
+    public <T extends DbBaseModel> void insertData(List<T> fishUserList, Observer<Long> observer) {
+        databaseControl.insert(fishUserList, observer);
 //        DatabaseControl.getInstance(context).insertData(fishUserList,observer);
     }
 
-    public void deleteTable(FishUser c, Observer<Integer> observer) {
-        DatabaseControl.getInstance(context).getTableModel().delete(c, observer);
+    public <T extends DbBaseModel> void deleteTable(T t, Observer<Long> observer) {
+        databaseControl.delete(t, observer);
     }
 
-    public void delete(FishUser c, Observer<Integer> observer) {
-        DatabaseControl.getInstance(context).getTableModel().delete(c, observer);
+    public <T extends DbBaseModel> void delete(T t, Observer<Long> observer) {
+        databaseControl.delete(t, observer);
     }
 
-    public void deleteList(List<FishUser> c, Observer<Integer> observer) {
-        DatabaseControl.getInstance(context).getTableModel().deleteList(c, observer);
+    public <T extends DbBaseModel> void deleteList(List<T> c, Observer<Long> observer) {
+        databaseControl.delete(c, observer);
     }
 
-    public void update(FishUser fishUser, String[] accordingField, Observer<Integer> observer) {
-        DatabaseControl.getInstance(context).getTableModel().update(fishUser, accordingField, observer);
+    public <T extends DbBaseModel> void update(T t, Observer<Long> observer) {
+        databaseControl.update(t, observer);
     }
+
+    public <T extends DbBaseModel, M> void query(T c, Observer<List<M>> observer) {
+        databaseControl.query(c, observer);
+    }
+
 }

@@ -1,5 +1,7 @@
 package com.smle.fish.model.db;
 
+import com.smle.fish.smilelibrary.db.DbBaseModel;
+
 /**
  * @PACKAGE_NAME：com.smle.fish.model.db
  * @user：yj
@@ -7,9 +9,9 @@ package com.smle.fish.model.db;
  * @版本：
  * @功能描述：
  */
-public class FishUser {
-    private String nickname = "";
-    private String name = "";
+public class FishUser extends DbBaseModel {
+    private String nickName = "";
+    private String name = "noName";
     private String passWord = "";
     private String picture = "";
     private int age = 0;
@@ -20,12 +22,12 @@ public class FishUser {
     private String address = "";
     private String phone = "";
 
-    public String getNickname() {
-        return nickname;
+    public String getNickName() {
+        return nickName;
     }
 
-    public void setNickname(String nickname) {
-        this.nickname = nickname;
+    public void setNickName(String nickName) {
+        this.nickName = nickName;
     }
 
     public String getName() {
@@ -90,5 +92,21 @@ public class FishUser {
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    @Override
+    public String toString() {
+        return "FishUser{" +
+                "id='" + id + '\'' +
+                "nickName='" + nickName + '\'' +
+                ", name='" + name + '\'' +
+                ", passWord='" + passWord + '\'' +
+                ", picture='" + picture + '\'' +
+                ", age=" + age +
+                ", sex=" + sex +
+                ", selfdomSignature='" + selfdomSignature + '\'' +
+                ", address='" + address + '\'' +
+                ", phone='" + phone + '\'' +
+                '}';
     }
 }

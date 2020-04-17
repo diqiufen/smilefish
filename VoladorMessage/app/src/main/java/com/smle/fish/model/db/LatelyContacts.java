@@ -1,5 +1,7 @@
 package com.smle.fish.model.db;
 
+import com.smle.fish.smilelibrary.db.DbBaseModel;
+
 /**
  * @PACKAGE_NAME：com.smle.fish.model.db
  * @user：yj
@@ -7,7 +9,7 @@ package com.smle.fish.model.db;
  * @版本：
  * @功能描述： 最近联系人
  */
-public class LatelyContacts {
+public class LatelyContacts extends DbBaseModel {
 
     private String nickname = "";
     private String name = "";

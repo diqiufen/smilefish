@@ -2,8 +2,9 @@ package com.smle.fish.ui;
 
 import android.os.Bundle;
 
-import com.smle.fish.db.Database;
+import com.smle.fish.interfaces.InjectView;
 import com.smle.fish.interfaces.WindowInterface;
+import com.smle.fish.smilelibrary.util.InitTool;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -24,7 +25,21 @@ public abstract class BaseActivity extends AppCompatActivity implements WindowIn
         super.onCreate(savedInstanceState);
         TAG = this.getClass().getSimpleName();
         setContentView(getContentViewId());
+        initView();
         init();
         getData();
+    }
+
+    protected void initView() {
+        try {
+            InitTool.init(this, InjectView.class, new InitTool.InitCallBack<InjectView>() {
+                @Override
+                public Object onCallBack(InjectView annotationObject) {
+                    return findViewById(annotationObject.viewId());
+                }
+            });
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
     }
 }

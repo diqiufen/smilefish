@@ -1,4 +1,4 @@
-package com.smle.fish.db;
+package com.smle.fish.smilelibrary.db;
 
 /**
  * @PACKAGE_NAME：com.smle.fish.db

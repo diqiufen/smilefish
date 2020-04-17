@@ -1,6 +1,9 @@
 package com.smle.fish.os;
 
 import android.app.Application;
+import android.content.Context;
+
+import com.smle.fish.db.FishDatabase;
 
 /**
  * @PACKAGE_NAME：com.smle.fish.os
@@ -10,4 +13,12 @@ import android.app.Application;
  * @功能描述：
  */
 public class FishApplication extends Application {
+
+    private Context context = this;
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        FishDatabase.getInstance(context).init();
+    }
 }

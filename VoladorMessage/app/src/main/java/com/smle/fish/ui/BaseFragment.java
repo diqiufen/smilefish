@@ -7,8 +7,10 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.smle.fish.R;
+import com.smle.fish.interfaces.InjectView;
 import com.smle.fish.interfaces.OnListFragmentInteractionListener;
 import com.smle.fish.interfaces.WindowInterface;
+import com.smle.fish.smilelibrary.util.InitTool;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -23,13 +25,16 @@ import androidx.fragment.app.Fragment;
  */
 public abstract class BaseFragment extends Fragment implements WindowInterface {
 
-    protected  View rootView;
+    protected View rootView;
     protected OnListFragmentInteractionListener mListener;
+    protected String TAG = this.getClass().getCanonicalName();
+    private Context context;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         rootView = inflater.inflate(getContentViewId(), container, false);
+        initView();
         init();
         getData();
         return rootView;
@@ -52,4 +57,17 @@ public abstract class BaseFragment extends Fragment implements WindowInterface {
         mListener = null;
     }
 
+    protected void initView() {
+        context = rootView.getContext();
+        try {
+            InitTool.init(this, InjectView.class, new InitTool.InitCallBack<InjectView>() {
+                @Override
+                public Object onCallBack(InjectView annotationObject) {
+                    return rootView.findViewById(annotationObject.viewId());
+                }
+            });
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+    }
 }

@@ -1,9 +1,17 @@
 package com.smle.fish.ui.home.home.dummy;
 
+import android.util.Log;
+
+import com.smle.fish.db.FishDatabase;
+import com.smle.fish.model.db.FishUser;
+import com.smle.fish.ui.home.MainActivity;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import androidx.lifecycle.Observer;
 
 /**
  * Helper class for providing sample content for user interfaces created by
@@ -25,12 +33,6 @@ public class DummyContent {
 
     private static final int COUNT = 25;
 
-    static {
-        // Add some sample items.
-        for (int i = 1; i <= COUNT; i++) {
-            addItem(createDummyItem(i));
-        }
-    }
 
     private static void addItem(DummyItem item) {
         ITEMS.add(item);

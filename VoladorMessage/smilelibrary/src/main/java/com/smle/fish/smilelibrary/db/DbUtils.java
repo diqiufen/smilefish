@@ -1,9 +1,8 @@
-package com.smle.fish.db;
+package com.smle.fish.smilelibrary.db;
 
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.text.TextUtils;
 import android.util.Log;
 
 import java.lang.reflect.Field;
@@ -12,8 +11,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import javax.xml.validation.Validator;
 
 /**
  * @PACKAGE_NAME：com.smle.fish.db
@@ -25,16 +22,68 @@ import javax.xml.validation.Validator;
 public class DbUtils {
 
     private String TAG = DbUtils.class.getCanonicalName();
-    private final String CREATE_TABLE = "create table";
+    private final String CREATE_TABLE = "CREATE TABLE";
+    private final String DELETE_TABLE = "DROP TABLE";
+    private final String ALTER_TABLE = "ALTER TABLE";//修改表名
     private String key = "id";//主键
 
     public void initTable(Class c) {
 
     }
 
-    public void createTable(SQLiteDatabase db, Class c) {
-        db.execSQL(getCreateTableSql(c));
+    public String createTable(Class c) {
+        return getCreateTableSql(c);
     }
+
+    public String deleteTable(Class c) {
+        StringBuffer stringBuffer = new StringBuffer();
+        stringBuffer.append(DELETE_TABLE);
+        stringBuffer.append(" ");
+        stringBuffer.append(c.getSimpleName());
+        Log.d(TAG, "sql=" + stringBuffer.toString());
+        return stringBuffer.toString();
+    }
+
+    /**
+     * 更新表名
+     *
+     * @param oldClass
+     * @param newClass
+     * @return
+     */
+    public String updateTableName(Class oldClass, Class newClass) {
+        StringBuffer stringBuffer = new StringBuffer();
+        stringBuffer.append(ALTER_TABLE);
+        stringBuffer.append(" ");
+        stringBuffer.append(oldClass.getSimpleName());
+        stringBuffer.append(" ");
+        stringBuffer.append("RENAME TO");
+        stringBuffer.append(" ");
+        stringBuffer.append(newClass.getSimpleName());
+        Log.d(TAG, "sql=" + stringBuffer.toString());
+        return stringBuffer.toString();
+    }
+
+    /**
+     * 给表新增列
+     *
+     * @param oldClass
+     * @param columnName
+     * @return
+     */
+    public String addTableColumn(Class oldClass, String columnName) {
+        StringBuffer stringBuffer = new StringBuffer();
+        stringBuffer.append(ALTER_TABLE);
+        stringBuffer.append(" ");
+        stringBuffer.append(oldClass.getSimpleName());
+        stringBuffer.append(" ");
+        stringBuffer.append("ADD COLUMN");
+        stringBuffer.append(" ");
+        stringBuffer.append(columnName);
+        Log.d(TAG, "sql=" + stringBuffer.toString());
+        return stringBuffer.toString();
+    }
+
 
     /**
      * create table user(name varchar(20) ,age integer default 0 ,)
@@ -64,9 +113,9 @@ public class DbUtils {
         stringBuffer.append(" ");
         stringBuffer.append("KEY");
         stringBuffer.append(" ");
-        stringBuffer.append("UNIQUE");
-        stringBuffer.append(" ");
         stringBuffer.append("AUTOINCREMENT");
+        stringBuffer.append(" ");
+        stringBuffer.append("UNIQUE");
         stringBuffer.append(" ");
         stringBuffer.append(",");
     }
@@ -324,6 +373,14 @@ public class DbUtils {
         return deleteConditionValue;
     }
 
+    /**
+     * 根据模型 获取查到的数据
+     *
+     * @param c
+     * @param cursor
+     * @param <T>
+     * @return
+     */
     public <T> T getModule(Class c, Cursor cursor) {
         Object object = null;
         try {
@@ -379,6 +436,7 @@ public class DbUtils {
             e.printStackTrace();
         }
     }
+
     private void setBaseValue(Class c, Field field, Cursor cursor, Object object) {
         try {
             String fieldName = field.getName();
@@ -396,20 +454,24 @@ public class DbUtils {
         }
     }
 
-    private Object getTypeValue(Cursor cursor, Object type, String fieldName) {
+    private Object getTypeValue(Cursor cursor, Object type, String fieldName) throws NullPointerException {
         Object value = null;
-        if (type instanceof Integer) {
-            value = cursor.getInt(cursor.getColumnIndex(fieldName));
-        } else if (type instanceof Float) {
-            value = cursor.getFloat(cursor.getColumnIndex(fieldName));
-        } else if (type instanceof String) {
-            value = cursor.getString(cursor.getColumnIndex(fieldName));
-        } else if (type instanceof Long) {
-            value = cursor.getLong(cursor.getColumnIndex(fieldName));
-        } else if (type.toString().equals("int")) {
-            value = cursor.getInt(cursor.getColumnIndex(fieldName));
-        } else {
-            value = cursor.getString(cursor.getColumnIndex(fieldName));
+        try {
+            if (type instanceof Integer) {
+                value = cursor.getInt(cursor.getColumnIndex(fieldName));
+            } else if (type instanceof Float) {
+                value = cursor.getFloat(cursor.getColumnIndex(fieldName));
+            } else if (type instanceof String) {
+                value = cursor.getString(cursor.getColumnIndex(fieldName));
+            } else if (type instanceof Long) {
+                value = cursor.getLong(cursor.getColumnIndex(fieldName));
+            } else if (type.toString().equals("int")) {
+                value = cursor.getInt(cursor.getColumnIndex(fieldName));
+            } else {
+                value = cursor.getString(cursor.getColumnIndex(fieldName));
+            }
+        } catch (IllegalStateException e) {
+            new NullPointerException(fieldName);
         }
         return value;
     }

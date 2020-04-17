@@ -7,5 +7,5 @@ package com.smle.fish.smilelibrary;
  * @版本：
  * @功能描述：
  */
-public class Test {
+public @interface Test {
 }
