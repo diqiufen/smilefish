@@ -8,6 +8,7 @@ import com.smle.fish.smilelibrary.util.InitTool;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.HasDefaultViewModelProviderFactory;
 
 /**
  * @PACKAGE_NAME：com.smle.fish.ui
@@ -19,7 +20,7 @@ import androidx.appcompat.app.AppCompatActivity;
 public abstract class BaseActivity extends AppCompatActivity implements WindowInterface {
 
     protected String TAG = "BaseActivity";
-
+    HasDefaultViewModelProviderFactory providerFactory;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
