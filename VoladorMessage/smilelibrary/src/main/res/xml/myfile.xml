@@ -1,0 +1,35 @@
+<?xml version ="1.0" encoding ="utf-8"?>
+<paths>
+
+    <!--公开文件夹-->
+    <external-files-path
+        name="external_file"
+        path="." />
+    <!--公开缓存文件夹-->
+    <external-cache-path
+        name="external_cache"
+        path="." />
+    <!--公开 图片缓存文件夹-->
+    <external-cache-path
+        name="external_cache_Pictures"
+        path="Pictures" />
+    <!--公开 图片文件夹-->
+    <external-files-path
+        name="external_file_Pictures"
+        path="Pictures" />
+    <!--私有  文件夹-->
+    <files-path
+        name="internal_file"
+        path="." />
+    <!--私有  图片文件夹-->
+    <files-path
+        name="internal_file_Pictures"
+        path="Pictures" />
+    <!--私有缓存文件夹-->
+    <cache-path
+        name="internal_chace"
+        path="." />
+    <!--    <root-path-->
+    <!--        name="name"-->
+    <!--        path="" />-->
+</paths>
