@@ -39,4 +39,17 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
     implementation project(":smilelibrary")
+
+
+    implementation 'com.google.android.exoplayer:exoplayer-core:2.10.5'
+    implementation 'com.google.android.exoplayer:exoplayer-dash:2.10.5'
+    implementation 'com.google.android.exoplayer:exoplayer-ui:2.10.5'
+    implementation 'com.google.android.exoplayer:exoplayer-smoothstreaming:2.10.5'
+    implementation 'com.google.android.exoplayer:exoplayer-hls:2.10.5'
+
+//    implementation 'com.google.android.exoplayer:exoplayer-core:2.X.X'
+//    implementation 'com.google.android.exoplayer:exoplayer-dash:2.X.X'
+//    implementation 'com.google.android.exoplayer:exoplayer-ui:2.X.X'
+//    implementation 'com.google.android.exoplayer:exoplayer-smoothstreaming:2.X.X'
+//    implementation 'com.google.android.exoplayer:exoplayer-hls:2.X.X'
 }
